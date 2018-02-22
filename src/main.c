@@ -67,10 +67,17 @@ int main() {
   unsigned char buf[200000];
   int size = read_stdin_simple(buf, 200000);
   for (int i = 0; i < size; i++) {
-    printf("%c", buf[i]);
+    //printf("%c", buf[i]);
   }
 
-  jpeg_to_ascii(buf, size);
+  ascii_image img;
+  jpeg_to_ascii(buf, size, &img);
+  for (int i = 0; i < img.height; i++) {
+    for (int j = 0; j < img.width; j++) {
+      printf("%c", img.image[i * img.width + j]);
+    }
+    printf("\n");
+  }
 
   return 0;
 }
