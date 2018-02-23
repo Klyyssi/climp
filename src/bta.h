@@ -6,4 +6,9 @@ typedef struct ascii_image {
   int height;
 } ascii_image;
 
-ascii_image* jpeg_to_ascii(unsigned char* jpeg, int jpeg_size, ascii_image* img);
+typedef struct ascii_options {
+  char* char_set;
+  int char_set_size;
+} ascii_options;
+
+ascii_image* jpeg_to_ascii(unsigned char* jpeg, int jpeg_size, ascii_image* img, ascii_options options);

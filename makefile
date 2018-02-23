@@ -1,6 +1,6 @@
 HEADERS = src/bta.h
 OBJECTS = src/main.o src/bta.o
-LIBS = -lturbojpeg
+LIBS = -lturbojpeg -lm
 
 default: bta
 

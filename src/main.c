@@ -71,13 +71,21 @@ int main() {
   }
 
   ascii_image img;
-  jpeg_to_ascii(buf, size, &img);
+  ascii_options opts = {".BCD", 4};
+  jpeg_to_ascii(buf, size, &img, opts);
   for (int i = 0; i < img.height; i++) {
     for (int j = 0; j < img.width; j++) {
-      printf("%c", img.image[i * img.width + j]);
+      char c = img.image[i * img.width + j];
+      if (c != '\n') {
+        printf("%c", c);
+      } else {
+        printf("c");
+      }
     }
     printf("\n");
   }
+
+  free(img.image);
 
   return 0;
 }
