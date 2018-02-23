@@ -51,7 +51,7 @@ int read_stdin_simple(unsigned char* buf, int buf_size) {
   return total_size;
 }
 
-int main() {
+int main(int argc, char **argv) {
   //unsigned char* buf = read_stdin();
   //if (buf == -1) {
   //  return -1;
@@ -64,18 +64,34 @@ int main() {
   //printf("%s\n", buf);
   //printf("%d\n", i);
 
-  unsigned char buf[200000];
-  int size = read_stdin_simple(buf, 200000);
-  for (int i = 0; i < size; i++) {
-    //printf("%c", buf[i]);
+  int width = 0;
+  int height = 0;
+  int opt;
+
+  while((opt = getopt(argc, argv, "w:h:")) != -1) {
+    switch (opt) {
+      case 'w': width = atoi(optarg); break;
+      case 'h': height = atoi(optarg); break;
+      default:
+        printf("Usage: bta -w 150 -h 90\n");
+        exit(EXIT_FAILURE);
+    }
   }
 
-  ascii_image img;
-  ascii_options opts = {".BCD", 4};
-  jpeg_to_ascii(buf, size, &img, opts);
-  for (int i = 0; i < img.height; i++) {
-    for (int j = 0; j < img.width; j++) {
-      char c = img.image[i * img.width + j];
+  unsigned char buf[200000];
+  int size = read_stdin_simple(buf, 200000);
+
+  jpeg_image jpeg;
+  image_options img_opts = { width, height };
+  ascii_options ascii_opts = {"X ", 2 };
+  decompress_jpeg(buf, size, img_opts, &jpeg);
+  to_ascii(jpeg.image, jpeg.actual_height * jpeg.actual_width, ascii_opts);
+
+  printf("%d:%d\n", jpeg.actual_width, jpeg.actual_height);
+
+  for (int i = 0; i < jpeg.actual_height; i++) {
+    for (int j = 0; j < jpeg.actual_width; j++) {
+      char c = jpeg.image[i * jpeg.actual_width + j];
       if (c != '\n') {
         printf("%c", c);
       } else {
@@ -85,7 +101,7 @@ int main() {
     printf("\n");
   }
 
-  free(img.image);
+  free(jpeg.image);
 
   return 0;
 }
