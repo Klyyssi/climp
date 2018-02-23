@@ -66,12 +66,20 @@ int main(int argc, char **argv) {
 
   int width = 0;
   int height = 0;
+  int charset_length = 12;
+  char* charset = ".,abcdABCDZX";
+  char charset_allocated = 0;
   int opt;
 
-  while((opt = getopt(argc, argv, "w:h:")) != -1) {
+  while((opt = getopt(argc, argv, "w:h:c:")) != -1) {
     switch (opt) {
       case 'w': width = atoi(optarg); break;
       case 'h': height = atoi(optarg); break;
+      case 'c':
+        charset_length = strlen(optarg);
+        charset = malloc(sizeof(char) * charset_length);
+        memcpy(charset, optarg, charset_length);
+        break;
       default:
         printf("Usage: bta -w 150 -h 90\n");
         exit(EXIT_FAILURE);
@@ -83,7 +91,7 @@ int main(int argc, char **argv) {
 
   jpeg_image jpeg;
   image_options img_opts = { width, height };
-  ascii_options ascii_opts = {"X ", 2 };
+  ascii_options ascii_opts = {charset, charset_length};
   decompress_jpeg(buf, size, img_opts, &jpeg);
   to_ascii(jpeg.image, jpeg.actual_height * jpeg.actual_width, ascii_opts);
 
@@ -102,6 +110,9 @@ int main(int argc, char **argv) {
   }
 
   free(jpeg.image);
+  if (charset_allocated == 1) {
+    free(charset);
+  }
 
   return 0;
 }
