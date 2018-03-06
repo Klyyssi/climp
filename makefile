@@ -1,6 +1,6 @@
-HEADERS = src/bta.h
-OBJECTS = src/main.o src/bta.o
-LIBS = -lturbojpeg -lm
+HEADERS = src/bta.h src/video_decoder.h
+OBJECTS = src/main.o src/bta.o src/video_decoder.o
+LIBS = -lturbojpeg -lm -lavcodec -lavutil -lavformat
 
 default: bta
 

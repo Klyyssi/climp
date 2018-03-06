@@ -19,3 +19,7 @@ typedef struct ascii_options {
 int decompress_jpeg(unsigned char* jpeg, int jpeg_size, image_options options, jpeg_image* image);
 
 int to_ascii(unsigned char* img, int img_size, ascii_options options);
+
+int to_ascii2(const unsigned char* img, int img_size, ascii_options options, unsigned char* output);
+
+int display_image(const unsigned char* img, int width, int height);

@@ -9,7 +9,7 @@ typedef struct limits {
   unsigned char max;
 } limits;
 
-int min_and_max(unsigned char* img, int img_size, limits* out) {
+int min_and_max(const unsigned char* img, int img_size, limits* out) {
   unsigned char min = 0xFF, max = 0;
   for (int i = 0; i < img_size; i++) {
     unsigned char curr = img[i];
@@ -38,6 +38,38 @@ int to_ascii(unsigned char* img, int img_size, ascii_options options) {
       bin = options.char_set_size - 1;
     }
     img[i] = options.char_set[bin];
+  }
+
+  return 0;
+}
+
+int to_ascii2(const unsigned char* img, int img_size, ascii_options options, unsigned char* output) {
+  limits l;
+  min_and_max(img, img_size, &l);
+
+  for (int i = 0; i < img_size; i++) {
+    unsigned char curr = img[i];
+    int bin = floor(options.char_set_size * (curr - l.min)/(l.max - l.min));
+    if (bin >= options.char_set_size) {
+      bin = options.char_set_size - 1;
+    }
+    output[i] = options.char_set[bin];
+  }
+
+  return 0;
+}
+
+int display_image(const unsigned char* image, int width, int height) {
+  for (int i = 0; i < height; i++) {
+    for (int j = 0; j < width; j++) {
+      char c = image[i * width + j];
+      if (c != '\n') {
+        printf("%c", c);
+      } else {
+        printf("c");
+      }
+    }
+    printf("\n");
   }
 
   return 0;
