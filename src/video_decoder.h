@@ -1,5 +1,6 @@
 
-typedef struct video_options {
-  int size;
-} video_options;
+typedef struct frame_options {
+  int width;
+  int height;
+} frame_options;
 

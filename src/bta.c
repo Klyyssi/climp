@@ -71,7 +71,7 @@ int display_image(const unsigned char* image, int width, int height) {
     }
     printf("\n");
   }
-
+  fflush(stdout);
   return 0;
 }
 

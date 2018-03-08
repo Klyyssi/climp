@@ -64,7 +64,7 @@ static int cleanup() {
     avformat_close_input(&format);
 }
 
-int initialize_video(const char* filename, video_options* options)
+int initialize_video(const char* filename)
 {
     int ret = 0;
     int stream_index = 0;
@@ -129,14 +129,10 @@ int initialize_video(const char* filename, video_options* options)
     packet.size = 0;
     // -----------------------------------------------------------------
 
-    // Fill video options ----------------------------------------------
-    options->size = codecContext->width * codecContext->height + AV_INPUT_BUFFER_PADDING_SIZE;
-    // -----------------------------------------------------------------
-
     return 0;
 }
 
-int next_frame(unsigned char* buf, int buf_size) {
+int next_frame(unsigned char** buf, frame_options* options) {
     int ret = 0;
     int got_frame = 0;
 
@@ -147,11 +143,10 @@ int next_frame(unsigned char* buf, int buf_size) {
                 break;
             }
             if (got_frame) {
-                unsigned char arr[frame->linesize[0] * frame->height];
-                ascii_options opts = { ".abcABC", 7 };
-                to_ascii2(frame->data[0], frame->linesize[0] * frame->height, opts, arr);
-                display_image(arr, frame->linesize[0], frame->height);
-                usleep(30000);
+                options->height = frame->height;
+                options->width = frame->linesize[0];
+                (*buf) = (unsigned char*) frame->data[0];
+                return ret;
             }
             packet.data += ret;
             packet.size -= ret;
@@ -159,146 +154,6 @@ int next_frame(unsigned char* buf, int buf_size) {
     }
 
     return 0;
-}
-
-static void find_video_information(const char *filename)
-{
-    AVFormatContext* format = NULL;
-    AVCodecContext* codecContext = NULL;
-    AVCodec* codec = NULL;
-    AVStream* stream = NULL;
-    AVFrame* frame = NULL; // Contains decoded video frame
-    AVPacket packet; // Contains encoded video frame
-    uint8_t *video_dst_data[4] = {NULL};
-    int video_dst_linesize[4];
-    int video_dst_bufsize;
-    int stream_index = 0;
-    int ret = 0;
-    int width = 0;
-    int height = 0;
-    int pixel_format = 0;
-
-    av_register_all();
-
-    // Open file and allocate format context -------
-    ret = avformat_open_input(&format, filename, NULL, NULL);
-    if (ret < 0) {
-        printf("Could not open input stream. Error: %d\n", ret);
-        return;
-    }
-    // ---------------------------------------------
-
-    // Get stream information ----------------------
-    ret = avformat_find_stream_info(format, NULL);
-    if (ret < 0) {
-        printf("Could not read stream information\n");
-        return;
-    }
-    // ---------------------------------------------
-
-    // Figure out AVCodecContext, and find the AVCodec related to it ---
-    ret = av_find_best_stream(format, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
-    if (ret < 0) {
-        printf("Could not find stream in input file\n");
-        return;
-    }
-    stream_index = ret;
-    stream = format->streams[stream_index];
-    codecContext = stream->codec;
-    codec = avcodec_find_decoder(codecContext->codec_id);
-    if (!codec) {
-        printf("Could not find codec_id: %d\n", codecContext->codec_id);
-        return;
-    }
-    // -----------------------------------------------------------------
-
-
-    // Try to open the codec -------------------------------------------
-    ret = avcodec_open2(codecContext, codec, NULL);
-    if (ret < 0) {
-        printf("Could not open codec_id: %d\n", codecContext->codec_id);
-        return;
-    }
-    // -----------------------------------------------------------------
-    
-    // Allocate image buffer -------------------------------------------
-    width = codecContext->width;
-    height = codecContext->height;
-    pixel_format = codecContext->pix_fmt;
-    //ret = av_image_alloc(video_dst_data, video_dst_linesize, width, height, pixel_format, 1);
-    if (ret < 0) {
-        printf("Could not allocate image\n");
-        return;
-    }
-    video_dst_bufsize = ret;
-    // -----------------------------------------------------------------
-
-    // Dump information ------------------------------------------------
-    // av_dump_format(format, 0, filename, 0);
-    // -----------------------------------------------------------------
-
-    // Allocate frame --------------------------------------------------
-    frame = av_frame_alloc();
-    // -----------------------------------------------------------------
-
-    // Initialize packet -----------------------------------------------
-    av_init_packet(&packet);
-    packet.data = NULL;
-    packet.size = 0;
-    // -----------------------------------------------------------------
-
-    // Read frames from the encoded file -------------------------------
-    //ret = av_read_frame(format, &packet);
-    //if (ret < 0) {
-    //    printf("Could not read frames\n");
-    //}
-    // -----------------------------------------------------------------
-
-    // Decode ----------------------------------------------------------
-    int got_frame = 1;
-
-    while (av_read_frame(format, &packet) >= 0) {
-        do {
-            ret = avcodec_decode_video2(codecContext, frame, &got_frame, &packet);
-            if (ret < 0) {
-                //printf("Something went wrong\n");
-                break;
-            }
-            if (got_frame) {
-                //printf("PIXEL: %d %d %d\n", frame->data[0][0], frame->data[0][1], frame->data[0][2]);
-                //printf("n: %d\n", frame->coded_picture_number);
-                //printf("linesize: %d\n", frame->linesize[0]);
-                //printf("width: %d\n", frame->width);
-                //printf("height: %d\n", frame->height);
-                //printf("format: %d\n\n", frame->format);
-                //pgm_save(frame->data[0], frame->linesize[0],
-                // frame->width, frame->height, "yeah");
-                unsigned char arr[frame->linesize[0] * frame->height];
-                ascii_options opts = { ".abcABC", 7 };
-                to_ascii2(frame->data[0], frame->linesize[0] * frame->height, opts, arr);
-                display_image(arr, frame->linesize[0], frame->height);
-                usleep(20000);
-            }
-            packet.data += ret;
-            packet.size -= ret;
-        } while (packet.size > 0);
-    }
-        
-    // -----------------------------------------------------------------
-
-    printf("AVPacket size: %d\n", packet.size);
-    printf("Video duration: %f\n", (double)format->duration/AV_TIME_BASE);
-    printf("Video codec: %s\n", stream->codec->codec_descriptor->long_name);
-    printf("Video width: %d\n", stream->codec->width);
-    printf("Video height: %d\n", stream->codec->height);
-end:
-    // Cleanup ---------------------------------------------------------
-    av_free_packet(&packet);
-    avcodec_close(codecContext);
-    av_free(video_dst_data[0]);
-    av_frame_free(&frame);
-    avformat_close_input(&format);
-    // -----------------------------------------------------------------
 }
 
 static void video_decode_example(const char *outfilename, const char *filename)
@@ -388,25 +243,23 @@ static void video_decode_example(const char *outfilename, const char *filename)
     printf("\n");
 }
 
-/* int main(int argc, char **argv)
-{
-    //avcodec_register_all();
-
-    av_log_set_level(AV_LOG_QUIET);
-
-    printf("Version major: %d\n", LIBAVCODEC_VERSION_MAJOR);
-    printf("Version minor: %d\n", LIBAVCODEC_VERSION_MINOR);
-
-    //video_decode_example("test%02d.pgm", "vid.mp4");
-    find_video_information("vid4.mp4");
-
-    return 0;
-} */
-
 int main()
 {
-    video_options opts;
-    initialize_video("vid4.mp4", &opts);
-    next_frame(NULL, 0);
+    frame_options opts;
+    ascii_options ascii_opts = { ".abcABC", 7 };
+    unsigned char* buf;
+    int buf_size;
+    
+    initialize_video("vid4.mp4");
+    while (next_frame(&buf, &opts) > 0) {
+        buf_size = opts.width * opts.height;
+        unsigned char arr[buf_size];
+        to_ascii2(buf, buf_size, ascii_opts, arr);
+        display_image(arr, opts.width, opts.height);
+        usleep(20000);
+    }
+
+    cleanup();
+    
     return 0;
 }
