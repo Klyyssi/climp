@@ -4,6 +4,7 @@
 #include <string.h>
 #include "bta.h"
 #include "video_decoder.h"
+#include "image_scaler.h"
 
 #define BUF_SIZE 1024
 
@@ -52,46 +53,60 @@ int read_stdin_simple(unsigned char* buf, int buf_size) {
   return total_size;
 }
 
-void play_video(const char* filename, ascii_options ascii_opts) {
+void get_width_and_height(int* width, int* height, int actual_width, int actual_height) {
+  if (*width == 0 && *height == 0)
+  {
+    (*width) = actual_width;
+    (*height) = actual_height;
+  }
+  else if (*height == 0)
+  {
+    (*height) = image_get_height_preserve_aspect_ratio(actual_width, actual_height, *width);
+  }
+  else if (*width == 0)
+  {
+    (*width) = image_get_width_preserve_aspect_ratio(actual_width, actual_height, *height);
+  }
+}
+
+void play_video(const char* filename, int width, int height, ascii_options ascii_opts) {
   frame_options opts;
   unsigned char* buf;
   int buf_size;
     
   video_initialize(filename);
   while (video_next_frame(&buf, &opts) > 0) {
-      buf_size = opts.width * opts.height;
-      unsigned char arr[buf_size];
-      to_ascii2(buf, buf_size, ascii_opts, arr);
-      display_image(arr, opts.width, opts.height);
-      usleep(20000);
+    get_width_and_height(&width, &height, opts.width, opts.height);
+    buf_size = width * height;
+    unsigned char arr[buf_size];
+    image_naive_scale(buf, opts.width, opts.height, arr, width, height);
+    to_ascii(arr, buf_size, ascii_opts);
+    display_image(arr, width, height);
+    usleep(20000);
   }
 
   video_cleanup();
 }
 
 void show_image(int width, int height, ascii_options ascii_opts) {
-  unsigned char buf[200000];
-  int size = read_stdin_simple(buf, 200000);
+  unsigned char buf[2000000];
+  int size = read_stdin_simple(buf, 2000000);
 
   jpeg_image jpeg;
-  image_options img_opts = { width, height };
+  image_options img_opts = { 0, 0 };
   
   decompress_jpeg(buf, size, img_opts, &jpeg);
-  to_ascii(jpeg.image, jpeg.actual_height * jpeg.actual_width, ascii_opts);
 
-  printf("%d:%d\n", jpeg.actual_width, jpeg.actual_height);
+  get_width_and_height(&width, &height, jpeg.actual_width, jpeg.actual_height);
 
-  for (int i = 0; i < jpeg.actual_height; i++) {
-    for (int j = 0; j < jpeg.actual_width; j++) {
-      char c = jpeg.image[i * jpeg.actual_width + j];
-      if (c != '\n') {
-        printf("%c", c);
-      } else {
-        printf("c");
-      }
-    }
-    printf("\n");
-  }
+  unsigned char output[width * height];
+  image_naive_scale(jpeg.image, jpeg.actual_width, jpeg.actual_height, output, width, height);
+
+  to_ascii(output, width * height, ascii_opts);
+
+  // printf("%d:%d\n", jpeg.actual_width, jpeg.actual_height);
+
+  display_image(output, width, height);
 
   free(jpeg.image);
 }
@@ -137,7 +152,7 @@ int main(int argc, char **argv) {
   if (optind >= argc) {
     show_image(width, height, ascii_opts);
   } else {
-    play_video(argv[optind], ascii_opts);
+    play_video(argv[optind], width, height, ascii_opts);
   }
 
   if (charset_allocated) {
