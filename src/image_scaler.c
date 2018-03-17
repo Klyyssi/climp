@@ -21,12 +21,28 @@ int image_naive_scale(const unsigned char* src_image, int src_width, int src_hei
   return 0;
 }
 
-int image_get_width_preserve_aspect_ratio(int src_width, int src_height, int dst_height)
+static int image_get_width_preserve_aspect_ratio(int src_width, int src_height, int dst_height)
 {
   return dst_height * (src_width/(double) src_height);
 }
 
-int image_get_height_preserve_aspect_ratio(int src_width, int src_height, int dst_width)
+static int image_get_height_preserve_aspect_ratio(int src_width, int src_height, int dst_width)
 {
   return dst_width / (src_width / (double) src_height);
+}
+
+void get_width_and_height(int* width, int* height, int actual_width, int actual_height) {
+  if (*width == 0 && *height == 0)
+  {
+    (*width) = actual_width;
+    (*height) = actual_height;
+  }
+  else if (*height == 0)
+  {
+    (*height) = image_get_height_preserve_aspect_ratio(actual_width, actual_height, *width);
+  }
+  else if (*width == 0)
+  {
+    (*width) = image_get_width_preserve_aspect_ratio(actual_width, actual_height, *height);
+  }
 }
