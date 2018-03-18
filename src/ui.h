@@ -3,6 +3,6 @@
 
 #include "ascii_converter.h"
 
-int ui_start(const char* video_filename, int width, int height, ascii_options ascii_opts);
+int ui_start(const char* video_filename, int default_width, int default_height, ascii_options ascii_opts);
 
 #endif /* UI_H */
