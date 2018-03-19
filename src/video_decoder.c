@@ -23,7 +23,7 @@ void video_cleanup() {
     avformat_close_input(&format);
 }
 
-int video_initialize(const char* filename)
+int video_initialize(const char* filename, video_options* options)
 {
     int ret = 0;
     int stream_index = 0;
@@ -86,6 +86,10 @@ int video_initialize(const char* filename)
     av_init_packet(&packet);
     packet.data = NULL;
     packet.size = 0;
+    // -----------------------------------------------------------------
+
+    // Set video options -----------------------------------------------
+    options->avg_frame_rate = (float) stream->avg_frame_rate.num / stream->avg_frame_rate.den;
     // -----------------------------------------------------------------
 
     return 0;
