@@ -1,73 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <turbojpeg.h>
-#include <math.h>
-#include "bta.h"
+#include "image.h"
+#include "image_scaler.h"
 
-typedef struct limits {
-  unsigned char min;
-  unsigned char max;
-} limits;
+typedef struct image_options {
+  int preferred_width;
+  int preferred_height;
+} image_options;
 
-int min_and_max(const unsigned char* img, int img_size, limits* out) {
-  unsigned char min = 0xFF, max = 0;
-  for (int i = 0; i < img_size; i++) {
-    unsigned char curr = img[i];
-    if (curr < min) {
-      min = curr;
-    }
-    if (curr > max) {
-      max = curr;
-    }
-  }
+typedef struct jpeg_image {
+  unsigned char* image;
+  int size;
+  int actual_width;
+  int actual_height;
+} jpeg_image;
 
-  out->min = min;
-  out->max = max;
-
-  return 0;
-}
-
-int to_ascii(unsigned char* img, int img_size, ascii_options options) {
-  limits l;
-  min_and_max(img, img_size, &l);
-
-  for (int i = 0; i < img_size; i++) {
-    unsigned char curr = img[i];
-    int bin = floor(options.char_set_size * (curr - l.min)/(l.max - l.min));
-    if (bin >= options.char_set_size) {
-      bin = options.char_set_size - 1;
-    }
-    img[i] = options.char_set[bin];
-  }
-
-  return 0;
-}
-
-int to_ascii2(const unsigned char* img, int img_size, ascii_options options, unsigned char* output) {
-  limits l;
-  min_and_max(img, img_size, &l);
-
-  for (int i = 0; i < img_size; i++) {
-    unsigned char curr = img[i];
-    int bin = floor(options.char_set_size * (curr - l.min)/(l.max - l.min));
-    if (bin >= options.char_set_size) {
-      bin = options.char_set_size - 1;
-    }
-    output[i] = options.char_set[bin];
-  }
-
-  return 0;
-}
-
-int display_image(const unsigned char* image, int width, int height) {
+static int dump_image(const unsigned char* image, int width, int height)
+{
   for (int i = 0; i < height; i++) {
     for (int j = 0; j < width; j++) {
       char c = image[i * width + j];
-      if (c != '\n') {
-        printf("%c", c);
-      } else {
-        printf("c");
-      }
+      printf("%c", c);
     }
     printf("\n");
   }
@@ -75,7 +29,7 @@ int display_image(const unsigned char* image, int width, int height) {
   return 0;
 }
 
-int decompress_jpeg(unsigned char* jpeg, int jpeg_size, image_options options, jpeg_image* ai) {
+static int decompress_jpeg(unsigned char* jpeg, int jpeg_size, image_options options, jpeg_image* ai) {
   int width, height, jpegSubsamp, jpegColorspace, res, scaling_factor_amount, scaled_height, scaled_width;
   int pixel_format = TJPF_GRAY;
   int flags = TJFLAG_FASTDCT;
@@ -122,4 +76,24 @@ int decompress_jpeg(unsigned char* jpeg, int jpeg_size, image_options options, j
   ai->actual_height = scaled_height;
   ai->actual_width = scaled_width;
   return 0;
+}
+
+void show_image(unsigned char* image, int image_size, int width, int height, ascii_options ascii_opts) {
+  jpeg_image jpeg;
+  image_options img_opts = { 0, 0 };
+  
+  decompress_jpeg(image, image_size, img_opts, &jpeg);
+
+  get_width_and_height(&width, &height, jpeg.actual_width, jpeg.actual_height);
+
+  unsigned char output[width * height];
+  image_naive_scale(jpeg.image, jpeg.actual_width, jpeg.actual_height, output, width, height);
+
+  to_ascii(output, width * height, &ascii_opts);
+
+  // printf("%d:%d\n", jpeg.actual_width, jpeg.actual_height);
+
+  dump_image(output, width, height);
+
+  free(jpeg.image);
 }
