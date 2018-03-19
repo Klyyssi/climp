@@ -1,5 +1,6 @@
 #include <ncurses.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include "ui.h"
 #include "video_decoder.h"
 #include "image_scaler.h"
@@ -10,6 +11,8 @@
 #define RESIZE_WINDOW 410
 
 static int fit_to_screen = 0;
+
+static struct timeval tv;
 
 static int ui_initialize()
 {
@@ -23,11 +26,14 @@ static int ui_initialize()
 
 static int ui_draw_frame(const unsigned char* image, int width, int height)
 {
+  move(0,0);
   for (int i = 0; i < height; i++) {
     for (int j = 0; j < width; j++) {
-      mvaddch(i, j, (int) image[i * width + j]);
+      addch((int) image[i * width + j]);
     }
+    move(i, 0);
   }
+  
   refresh();
 }
 
@@ -36,19 +42,34 @@ static void ui_cleanup()
   endwin();
 }
 
+unsigned long current_time_microseconds()
+{
+  gettimeofday(&tv, NULL);
+  return 1000000 *  tv.tv_sec + tv.tv_usec;
+}
+
 int ui_start(const char* video_filename, int default_width, int default_height, ascii_options ascii_opts)
 {
   ui_initialize();
   frame_options opts;
+  video_options vid_opts;
   unsigned char* buf;
   int buf_size;
   int user_input;
+  int diff_microseconds = 0;
+  unsigned long prev_time_microseconds;
   int width = default_width;
   int height = default_height;
 
-  video_initialize(video_filename);
-  while (video_next_frame(&buf, &opts) > 0) {
+  if (width == 0 && height == 0) {
+    fit_to_screen = 1;
+    getmaxyx(stdscr, height, width);
+  }
 
+  video_initialize(video_filename, &vid_opts);
+  prev_time_microseconds = current_time_microseconds();
+  while (video_next_frame(&buf, &opts) > 0)
+  {
     user_input = getch();
     if (user_input == CTRL('c') || user_input == KEY_QUIT)
     {
@@ -80,9 +101,14 @@ int ui_start(const char* video_filename, int default_width, int default_height, 
     buf_size = width * height;
     unsigned char arr[buf_size];
     image_naive_scale(buf, opts.width, opts.height, arr, width, height);
-    to_ascii(arr, buf_size, ascii_opts);
+    to_ascii(arr, buf_size, &ascii_opts);
     ui_draw_frame(arr, width, height);
-    usleep(20000);
+    diff_microseconds = current_time_microseconds() - prev_time_microseconds;
+    int delay = 1/vid_opts.avg_frame_rate * 1000000 - diff_microseconds;
+    if (delay > 0) {
+      usleep(delay);
+    }
+    prev_time_microseconds = current_time_microseconds();
   }
 
   video_cleanup();
