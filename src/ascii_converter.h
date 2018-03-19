@@ -6,6 +6,11 @@ typedef struct ascii_options {
   int char_set_size;
 } ascii_options;
 
-int to_ascii(unsigned char* img, int img_size, ascii_options options);
+typedef struct limits {
+  unsigned char min;
+  unsigned char max;
+} limits;
+
+int to_ascii(unsigned char* img, int img_size, const ascii_options* options);
 
 #endif
