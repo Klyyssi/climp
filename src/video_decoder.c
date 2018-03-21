@@ -107,7 +107,8 @@ int video_next_frame(unsigned char** buf, frame_options* options) {
             }
             if (got_frame) {
                 options->height = frame->height;
-                options->width = frame->linesize[0];
+                options->stride = frame->linesize[0];
+                options->width = frame->width;
                 (*buf) = (unsigned char*) frame->data[0];
                 return ret;
             }

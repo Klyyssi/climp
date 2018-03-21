@@ -1,7 +1,7 @@
 
 #include "image_scaler.h"
 
-int image_naive_scale(const unsigned char* src_image, int src_width, int src_height, unsigned char* dst_image, int dst_width, int dst_height)
+int image_naive_scale(const unsigned char* src_image, int src_width, int src_height, int src_stride, unsigned char* dst_image, int dst_width, int dst_height)
 {
   double x_scale_factor = src_width / (double) dst_width;
   double y_scale_factor = src_height / (double) dst_height;
@@ -16,7 +16,7 @@ int image_naive_scale(const unsigned char* src_image, int src_width, int src_hei
       src_x = j * x_scale_factor;
       src_y = i * y_scale_factor;
 
-      c = src_image[src_y * src_width + src_x];
+      c = src_image[src_y * src_stride + src_x];
 
       dst_image[i * dst_width + j] = c;
     }

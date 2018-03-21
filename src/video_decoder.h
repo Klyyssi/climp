@@ -4,6 +4,7 @@
 typedef struct frame_options {
   int width;
   int height;
+  int stride;
 } frame_options;
 
 typedef struct video_options {
