@@ -11,6 +11,6 @@ typedef struct limits {
   unsigned char max;
 } limits;
 
-int to_ascii(unsigned char* img, int img_size, const ascii_options* options);
+int to_ascii(unsigned char* img, int img_size, const ascii_options* options, limits* l);
 
 #endif

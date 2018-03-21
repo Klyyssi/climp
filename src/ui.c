@@ -60,6 +60,7 @@ int ui_start(const char* video_filename, int default_width, int default_height, 
   unsigned long prev_time_microseconds;
   int width = default_width;
   int height = default_height;
+  limits brightness_limits = {0, 255};
 
   if (width == 0 && height == 0) {
     fit_to_screen = 1;
@@ -101,7 +102,7 @@ int ui_start(const char* video_filename, int default_width, int default_height, 
     buf_size = width * height;
     unsigned char arr[buf_size];
     image_naive_scale(buf, opts.width, opts.height, arr, width, height);
-    to_ascii(arr, buf_size, &ascii_opts);
+    to_ascii(arr, buf_size, &ascii_opts, &brightness_limits);
     ui_draw_frame(arr, width, height);
     diff_microseconds = current_time_microseconds() - prev_time_microseconds;
     int delay = 1/vid_opts.avg_frame_rate * 1000000 - diff_microseconds;

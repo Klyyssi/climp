@@ -5,14 +5,18 @@ int image_naive_scale(const unsigned char* src_image, int src_width, int src_hei
 {
   double x_scale_factor = src_width / (double) dst_width;
   double y_scale_factor = src_height / (double) dst_height;
+  int src_x;
+  int src_y;
+  int c;
+  int i,j;
 
-  for (int i = 0; i < dst_height; i++) {
-    for (int j = 0; j < dst_width; j++) {
+  for (i = 0; i < dst_height; i++) {
+    for (j = 0; j < dst_width; j++) {
 
-      int src_x = j * x_scale_factor;
-      int src_y = i * y_scale_factor;
+      src_x = j * x_scale_factor;
+      src_y = i * y_scale_factor;
 
-      char c = src_image[src_y * src_width + src_x];
+      c = src_image[src_y * src_width + src_x];
 
       dst_image[i * dst_width + j] = c;
     }
