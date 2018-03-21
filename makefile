@@ -8,7 +8,7 @@ default: bta
 	gcc -c $< -o $@
 
 bta: $(OBJECTS)
-	gcc $(OBJECTS) -o $@ $(LIBS)
+	gcc $(OBJECTS) -o $@ $(LIBS) -O3
 
 clean_objects:
 	-rm -f $(OBJECTS)

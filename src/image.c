@@ -89,7 +89,7 @@ void show_image(unsigned char* image, int image_size, int width, int height, asc
   unsigned char output[width * height];
   image_naive_scale(jpeg.image, jpeg.actual_width, jpeg.actual_height, output, width, height);
 
-  to_ascii(output, width * height, &ascii_opts);
+  to_ascii(output, width * height, &ascii_opts, NULL);
 
   // printf("%d:%d\n", jpeg.actual_width, jpeg.actual_height);
 
