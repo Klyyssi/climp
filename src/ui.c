@@ -101,7 +101,7 @@ int ui_start(const char* video_filename, int default_width, int default_height, 
     get_width_and_height(&width, &height, opts.width, opts.height);
     buf_size = width * height;
     unsigned char arr[buf_size];
-    image_naive_scale(buf, opts.width, opts.height, arr, width, height);
+    image_naive_scale(buf, opts.width, opts.height, opts.stride, arr, width, height);
     to_ascii(arr, buf_size, &ascii_opts, &brightness_limits);
     ui_draw_frame(arr, width, height);
     diff_microseconds = current_time_microseconds() - prev_time_microseconds;
