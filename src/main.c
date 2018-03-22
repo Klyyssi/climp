@@ -26,8 +26,8 @@ int read_stdin_simple(unsigned char* buf, int buf_size) {
 int main(int argc, char **argv) {
   int width = 0;
   int height = 0;
-  int charset_length = 12;
-  char* charset = " .,abcdABCDZX";
+  int charset_length = 17;
+  char* charset = "  `',.+abcdABCDZX";
   char charset_allocated = 0;
   int opt;
 
