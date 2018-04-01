@@ -2,6 +2,10 @@
 
 Play videos and other media in the command line.
 
+## Usage
+
+
+
 ## Dependencies
 
 | Library        | Version        | Details           |
@@ -31,3 +35,9 @@ sudo apt install libncurses5-dev
 make
 ```
 
+## TODO
+
+- Colours
+- Subtitles
+- Audio
+- Support for more image formats
