@@ -15,8 +15,12 @@ static AVCodec* codec = NULL;
 static AVStream* stream = NULL;
 static AVFrame* frame = NULL; // Contains decoded video frame
 static AVPacket packet; // Contains encoded video frame(s)
+static int stream_index = 0;
 
-void video_cleanup() {
+#define REWIND_FAST_FORWARD_SECONDS 10
+
+void video_cleanup()
+{
     av_free_packet(&packet);
     avcodec_close(codecContext);
     av_frame_free(&frame);
@@ -26,7 +30,6 @@ void video_cleanup() {
 int video_initialize(const char* filename, video_options* options)
 {
     int ret = 0;
-    int stream_index = 0;
 
     av_register_all();
 
@@ -95,7 +98,32 @@ int video_initialize(const char* filename, video_options* options)
     return 0;
 }
 
-int video_next_frame(unsigned char** buf, frame_options* options) {
+int video_fast_forward()
+{
+    int ret = 0;
+    AVRational s = stream->time_base;
+    ret = av_seek_frame(format, stream_index, frame->pkt_pts + AV_TIME_BASE * REWIND_FAST_FORWARD_SECONDS * s.num / s.den, 0);
+    avcodec_flush_buffers(codecContext);
+    if (ret < 0) {
+        return -1;
+    }
+    return 0;
+}
+
+int video_rewind()
+{
+    int ret = 0;
+    AVRational s = stream->time_base;
+    ret = av_seek_frame(format, stream_index, frame->pkt_pts - AV_TIME_BASE * REWIND_FAST_FORWARD_SECONDS * s.num / s.den, AVSEEK_FLAG_BACKWARD);
+    avcodec_flush_buffers(codecContext);
+    if (ret < 0) {
+        return -1;
+    }
+    return 0;
+}
+
+int video_next_frame(unsigned char** buf, frame_options* options)
+{
     int ret = 0;
     int got_frame = 0;
 
@@ -109,6 +137,7 @@ int video_next_frame(unsigned char** buf, frame_options* options) {
                 options->height = frame->height;
                 options->stride = frame->linesize[0];
                 options->width = frame->width;
+                options->time_in_seconds = frame->pkt_pts * stream->time_base.num / stream->time_base.den;
                 (*buf) = (unsigned char*) frame->data[0];
                 return ret;
             }

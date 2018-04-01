@@ -48,6 +48,13 @@ unsigned long current_time_microseconds()
   return 1000000 *  tv.tv_sec + tv.tv_usec;
 }
 
+void display_time(int seconds)
+{
+  move(0,0);
+  printw("%d:%d:%d", seconds / (60 * 60) ,seconds / 60 % 60, seconds % 60);
+  refresh();
+}
+
 int ui_start(const char* video_filename, int default_width, int default_height, ascii_options ascii_opts)
 {
   ui_initialize();
@@ -75,6 +82,14 @@ int ui_start(const char* video_filename, int default_width, int default_height, 
     if (user_input == CTRL('c') || user_input == KEY_QUIT)
     {
       break;
+    }
+    else if (user_input == KEY_LEFT)
+    {
+      video_rewind();
+    }
+    else if (user_input == KEY_RIGHT)
+    {
+      video_fast_forward();
     }
     else if (user_input == KEY_FIT_TO_SCREEN)
     {
@@ -104,6 +119,7 @@ int ui_start(const char* video_filename, int default_width, int default_height, 
     image_naive_scale(buf, opts.width, opts.height, opts.stride, arr, width, height);
     to_ascii(arr, buf_size, &ascii_opts, &brightness_limits);
     ui_draw_frame(arr, width, height);
+    display_time(opts.time_in_seconds);
     diff_microseconds = current_time_microseconds() - prev_time_microseconds;
     int delay = 1/vid_opts.avg_frame_rate * 1000000 - diff_microseconds;
     if (delay > 0) {
