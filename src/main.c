@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
         memcpy(charset, optarg, charset_length);
         break;
       default:
-        printf("Usage: bta -w 150 -h 90\n");
+        printf("Usage: climp [OPTIONS]... [FILENAME]\n");
         exit(EXIT_FAILURE);
     }
   }
