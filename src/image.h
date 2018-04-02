@@ -5,4 +5,6 @@
 
 void show_image(unsigned char* image, int image_size, int width, int height, ascii_options ascii_opts);
 
+int is_image(unsigned char* file);
+
 #endif

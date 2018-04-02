@@ -16,6 +16,17 @@ typedef struct jpeg_image {
   int actual_height;
 } jpeg_image;
 
+typedef struct magic_number {
+  char name[30];
+  unsigned char prefix[30];
+  int size;
+} magic_number;
+
+#define IMAGE_MAGIC_NUMBERS_AMOUNT 1
+static magic_number image_magic_numbers[IMAGE_MAGIC_NUMBERS_AMOUNT] = {
+  { "JPEG", {0xFF, 0xD8}, 2 }
+};
+
 static int dump_image(const unsigned char* image, int width, int height)
 {
   for (int i = 0; i < height; i++) {
@@ -29,7 +40,8 @@ static int dump_image(const unsigned char* image, int width, int height)
   return 0;
 }
 
-static int decompress_jpeg(unsigned char* jpeg, int jpeg_size, image_options options, jpeg_image* ai) {
+static int decompress_jpeg(unsigned char* jpeg, int jpeg_size, image_options options, jpeg_image* ai)
+{
   int width, height, jpegSubsamp, jpegColorspace, res, scaling_factor_amount, scaled_height, scaled_width;
   int pixel_format = TJPF_GRAY;
   int flags = TJFLAG_FASTDCT;
@@ -78,7 +90,30 @@ static int decompress_jpeg(unsigned char* jpeg, int jpeg_size, image_options opt
   return 0;
 }
 
-void show_image(unsigned char* image, int image_size, int width, int height, ascii_options ascii_opts) {
+int is_image(unsigned char* file)
+{
+  int i;
+  int j;
+
+  for (i = 0; i < IMAGE_MAGIC_NUMBERS_AMOUNT; i++) {
+    magic_number mn = image_magic_numbers[i];
+
+    for (j = 0; j < mn.size; j++) {
+      if (mn.prefix[j] == file[j]) {
+        if (j == mn.size - 1) {
+          return 1;
+        }
+      } else {
+        break;
+      }
+    }
+  }
+
+  return 0;
+}
+
+void show_image(unsigned char* image, int image_size, int width, int height, ascii_options ascii_opts)
+{
   jpeg_image jpeg;
   image_options img_opts = { 0, 0 };
   
