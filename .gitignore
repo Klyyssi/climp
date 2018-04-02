@@ -1,3 +1,4 @@
 *.o
 bta
+climp
 .vscode
