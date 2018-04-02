@@ -2,6 +2,8 @@
 
 Play videos and other media in the command line.
 
+![Playing a video](example.gif)
+
 ## Usage
 
 
